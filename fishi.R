@@ -61,8 +61,10 @@ psa_sf <- psa %>%
   st_as_sf(coords = c("longitude", "latitude"), crs = crs(shape))
 
 ggplot() +
+  geom_sf(data = usa) +
+  geom_sf(data = mex) +
   geom_sf(data = shape, aes(fill=1), alpha = 0.5) +
-  geom_sf(data = points_sf, col = "green")
+  geom_sf(data = points_sf, col = "green") +
   geom_sf(data = psa_sf, col = "yellow")
 
 
@@ -131,7 +133,7 @@ esvm <-  esm_svm(
   thr = 'max_sens_spec'
 )
 esvm_pred <- sdm_predict(
-  models = esvm,
+  models = list(esvm),
   pred = varfile,
   con_thr = TRUE,
   predict_area = vect(shape)
@@ -148,12 +150,15 @@ raster_df_esvm <- data.frame(x = coords_esvm[, 1], y = coords_esvm[, 2], value =
 ggplot() +
   geom_sf(data = usa) +
   geom_sf(data = mex) +
-  geom_sf(data = shape, aes(fill=1), alpha = 0.5) +
+  geom_sf(data = shape, alpha = 0.5) +
   geom_raster(data = raster_df_svm, mapping = aes(x, y, fill=value)) +
   scale_fill_gradientn(
     colours = viridis::viridis(10),
-    na.value = "transparent"
-  )
+    na.value = "transparent",
+    guide_colorbar(title = "Probability")
+  ) +
+  xlab("") +
+  ylab("")
 
 merge_df <- sdm_summarize(models = list(esvm))
 
