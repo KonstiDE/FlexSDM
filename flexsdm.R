@@ -136,9 +136,6 @@ mpred <- sdm_predict(
   predict_area = ca
 )
 
-hespero_pa3$tmn
-hespero_pa3$cwd
-
 eglm  <- esm_glm(
   data = hespero_pa3,
   response = 'pr_ab',

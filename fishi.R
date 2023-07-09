@@ -28,19 +28,17 @@ points <- read.csv("data/occs/points_data.csv")
 usa <- st_crop(usa, shape)
 mex <- st_crop(mex, shape)
 
-
+### Mention name that vars have to be named after for further processing
 
 # !!!Coding task!!!
-# ----------------------------------------------------------------------------------
-# | Convert the points csv to an sf object an plot everything together in ggplot() |
-# ----------------------------------------------------------------------------------
-points_sf <- st_as_sf(points, coords = 19:20, crs = crs(shape))
+# -----------------------------------------------------------------------------------
+# | Convert the points csv to an sf object an plot everything together in ggplot(). |
+# | Name the outcome sf object "points_sf" for later on plotting  .                 |
+# -----------------------------------------------------------------------------------
+# With everything we mean USA, Mexico, the theoretical shape of occurrence and the
+# points of occuurrence themselves
 
-ggplot() +
-  geom_sf(data = usa) +
-  geom_sf(data = mex) +
-  geom_sf(data = shape, aes(fill=1), alpha = 0.5) +
-  geom_sf(data = points_sf, col = "red")
+
 
 # -----------------------------------------------------------------------------------
 
@@ -57,7 +55,6 @@ psa <- sample_pseudoabs(
 )
 
 psa_sf <- psa %>%
-  as_tibble() %>%
   st_as_sf(coords = c("longitude", "latitude"), crs = crs(shape))
 
 ggplot() +
@@ -71,20 +68,15 @@ ggplot() +
 # !!!Coding task!!!
 # ------------------------------------------------------------------------------------------------------------
 # | Select the presnece and geometry variable from presenses and pseudo absences and combine them in one df. |
-# | Hint: The outcome should be a dataframe with two columns and 14 rows.                                    |
+# | Hint: The outcome should be a dataframe with two columns and 44 rows.                                    |
 # ------------------------------------------------------------------------------------------------------------
 
-points_sf_selected <- points_sf[,c("presence", "geometry")]
-colnames(psa_sf) <- c("presence", "geometry")
 
-points_complete <- rbind(points_sf_selected, psa_sf)
 
 # -----------------------------------------------------------------------------------------------------------
-# Optional: Split the location into two seperate x and y columns:
+# Split the location into two seperate x and y columns named "seperated_coord".
 
-separated_coord <- points_complete %>%
-    mutate(x = unlist(map(points_complete$geometry,1)),
-           y = unlist(map(points_complete$geometry,2)))
+
 
 # -----------------------------------------------------------------------------------------------------------
 
@@ -98,18 +90,20 @@ random_partitioning <- part_random(
 
 # Remove NA values from the predictors, replace them with zero
 varfile <- ifel(is.nan(varfile), 0, varfile)
-plot(varfile[[1]])
 
-sdm_extract <- sdm_extract(
-  data = random_partitioning,
-  x = 'x',
-  y = 'y',
-  env_layer = varfile,
-  variables = c("sst", "chlor_a", "nflh", "poc"),
-  filter_na = FALSE
-)
 
-# Fitting model
+# !!!Coding task!!!
+# -----------------------------------------------------------------------------------------------------------------
+# | Extract the environmental variables from the varfile for our random_partitioning. Name the outcome sdm_extract|
+# -----------------------------------------------------------------------------------------------------------------
+
+
+
+# -----------------------------------------------------------------------------------------------------------------
+
+
+
+# Fitting standard model approach
 msvm <-  fit_svm(
   data = sdm_extract,
   response = 'presence',
@@ -118,13 +112,14 @@ msvm <-  fit_svm(
   thr = 'max_sens_spec'
 )
 mpred <- sdm_predict(
-  models = list(msvm),
+  models = msvm,
   pred = varfile,
   con_thr = TRUE,
   predict_area = vect(shape)
 )
 
-# Essamble model
+
+# Fitting essamble model approach (Lomba et al. (2010) and Breiner et al. (2015))
 esvm <-  esm_svm(
   data = sdm_extract,
   response = 'presence',
@@ -133,7 +128,7 @@ esvm <-  esm_svm(
   thr = 'max_sens_spec'
 )
 esvm_pred <- sdm_predict(
-  models = list(esvm),
+  models = esvm,
   pred = varfile,
   con_thr = TRUE,
   predict_area = vect(shape)
@@ -147,6 +142,7 @@ coords_esvm <- xyFromCell(esvm_pred[[1]], cell = 1:ncell(esvm_pred[[1]]))
 raster_df_esvm <- data.frame(x = coords_esvm[, 1], y = coords_esvm[, 2], value = as.vector(esvm_pred[[1]]))
 
 
+# Plot the raster_df_svm or raster_df_esvm
 ggplot() +
   geom_sf(data = usa) +
   geom_sf(data = mex) +
@@ -158,9 +154,11 @@ ggplot() +
     guide_colorbar(title = "Probability")
   ) +
   xlab("") +
-  ylab("")
+  ylab("") +
+  ggtitle("Probability distribution of the appearance of the Highfinn Blenny")
 
-merge_df <- sdm_summarize(models = list(esvm))
+
+merge_df <- sdm_summarize(models = list(msvm, esvm))
 
 knitr::kable(
   merge_df %>% dplyr::select(
