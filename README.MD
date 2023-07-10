@@ -1,6 +1,6 @@
 ## FlexSDM
 
-Welcome to the [FlexSDM](https://github.com/sjevelazco/flexsdm) showcase for the course "Spatial Analysis and Modelling"
+Welcome to the [FlexSDM](https://github.com/sjevelazco/flexsdm) showcase for the course "MET-1 Spatial Modeling and Prediction"
 of the [EAGLE M.Sc.](http://eagle-science.org/) program. Is this showcase we model the species distribution of 
 "Lupinoblennius nicholsi" (Highfin blenny) around the Gulf of Mexico. All data is available directly in the Repository.
 \
